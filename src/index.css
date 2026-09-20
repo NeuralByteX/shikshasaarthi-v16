@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #002756;
+  --color-primary-container: #0a3d7a;
+  --color-on-primary: #ffffff;
+  --color-primary-fixed: #d7e3ff;
+  --color-on-primary-fixed: #001b3e;
+  --color-primary-fixed-dim: #aac7ff;
+  --color-on-primary-fixed-variant: #194683;
+  --color-secondary: #0060a8;
+  --color-secondary-container: #47a1ff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #003663;
+  --color-secondary-fixed: #d3e4ff;
+  --color-on-secondary-fixed: #001c38;
+  --color-secondary-fixed-dim: #a2c9ff;
+  --color-on-secondary-fixed-variant: #004881;
+  --color-tertiary: #003007;
+  --color-tertiary-container: #004910;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #5bbe5d;
+  --color-tertiary-fixed: #94f990;
+  --color-tertiary-fixed-dim: #78dc77;
+  --color-on-tertiary-fixed: #002204;
+  --color-on-tertiary-fixed-variant: #005313;
+  --color-surface: #f4faff;
+  --color-surface-bright: #f4faff;
+  --color-surface-dim: #cfdce4;
+  --color-surface-variant: #d7e4ec;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #e9f6fd;
+  --color-surface-container: #e3f0f8;
+  --color-surface-container-high: #ddeaf2;
+  --color-surface-container-highest: #d7e4ec;
+  --color-on-surface: #111d23;
+  --color-on-surface-variant: #434750;
+  --color-outline: #737781;
+  --color-outline-variant: #c3c6d2;
+  --color-inverse-surface: #263238;
+  --color-inverse-on-surface: #e6f3fb;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-playful: 'Baloo 2', 'Plus Jakarta Sans', sans-serif;
+}
+
+@layer base {
+  body {
+    overscroll-behavior-y: none;
+    font-family: var(--font-sans);
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,17 @@
+src/data.ts
+src/App.tsx
+src/types.ts
+src/components/BottomNav.tsx
+src/components/Header.tsx
+src/components/PrototypeTopBar.tsx
+src/components/screens/TeacherPortalScreen.tsx
+src/components/screens/RoleSelectScreen.tsx
+src/components/screens/PrintFallbackScreen.tsx
+src/components/screens/StudentHomeScreen.tsx
+src/components/screens/UpdatedHomeScreen.tsx
+src/components/screens/KioskRadarScreen.tsx
+src/components/screens/DiagnosticScreen.tsx
+src/components/screens/TeacherLoginScreen.tsx
+src/components/screens/DiagnosticResultScreen.tsx
+
+The exact existing submit/dashboard handlers should be wired using DATABASE_WIRING.md.

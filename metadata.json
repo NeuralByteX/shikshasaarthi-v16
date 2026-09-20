@@ -1,0 +1,8 @@
+{
+  "name": "ShikshaSaarthi App",
+  "description": "NDEAR-compliant offline diagnostic and remedial learning platform with mesh sync, gamified missions, AI buddy, and teacher analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
