@@ -93,6 +93,7 @@ create table if not exists public.diagnostic_results (
   score integer not null default 0,
   total_questions integer not null default 0,
   topic_scores jsonb not null default '{}'::jsonb,
+  diagnostic_details jsonb not null default '{}'::jsonb,
   completed_at timestamptz not null default now()
 );
 

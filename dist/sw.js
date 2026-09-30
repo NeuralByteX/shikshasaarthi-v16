@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shikshasaarthi-v15-offline-v1';
+const CACHE_NAME = 'shikshasaarthi-v17-offline-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.add('/')));

@@ -21,7 +21,8 @@ import { mockStudentProfile, diagnosticQuestionsData } from './data';
 import { isSupabaseConfigured } from './lib/config';
 import { saveDiagnosticResult, savePracticeResult, PracticeSaveInput } from './lib/learningData';
 import { getOfflineSyncState, queueDiagnosticForSync, queuePracticeForSync, syncPendingEvents } from './lib/offlineSync';
-import { cacheStudentProfile, clearCachedStudentProfile, getCachedStudentProfile } from './lib/offlineDb';
+import { cacheStudentProfile, clearCachedStudentProfile, getCachedStudentProfile, saveLocalResult } from './lib/offlineDb';
+import { updateLocalMastery, summarizeDiagnosticEvidence } from './lib/adaptiveEngine';
 import {
   signInStudent,
   signUpStudent,
@@ -308,11 +309,11 @@ export default function App() {
     triggerLoaderTransition(
       'diagnostic-flow',
       'Launching AI Diagnostic...',
-      'निदानात्मक जांच तैयार हो रही है (5 Questions)...'
+      'निदानात्मक जांच तैयार हो रही है...'
     );
   };
 
-  const handleCompleteDiagnostic = (results: DiagnosticAnswerRecord[]) => {
+  const handleCompleteDiagnostic = async (results: DiagnosticAnswerRecord[]) => {
     // Single source of truth: this same computation feeds BOTH the result
     // screen the student sees AND the row saved to Supabase, so they can
     // never disagree with each other.
@@ -328,28 +329,42 @@ export default function App() {
       topicTally[r.topic] = bucket;
     });
 
+    const evidenceSummary = new Map(summarizeDiagnosticEvidence(results).map((item) => [item.topic, item]));
     const topicBreakdown: TopicBreakdownEntry[] = Object.entries(topicTally).map(
-      ([topic, { topicHi, correct, total }]) => ({
-        topic,
-        topicHi,
-        correct,
-        total,
-        percent: total > 0 ? Math.round((correct / total) * 100) : 0,
-      })
+      ([topic, { topicHi, correct, total }]) => {
+        const evidence = evidenceSummary.get(topic);
+        const evidencePercent = evidence?.evidencePercent ?? (total > 0 ? Math.round((correct / total) * 100) : 0);
+        const verificationNeeded = evidencePercent >= 80 && (evidence?.likelyGuessCount ?? 0) > 0 || evidencePercent >= 80 && (evidence?.confidencePercent ?? 0) < 60;
+        return {
+          topic,
+          topicHi,
+          correct,
+          total,
+          percent: total > 0 ? Math.round((correct / total) * 100) : 0,
+          evidencePercent,
+          confidencePercent: evidence?.confidencePercent ?? 0,
+          likelyGuessCount: evidence?.likelyGuessCount ?? 0,
+          verificationNeeded,
+        };
+      }
     );
 
-    const sortedByPercent = [...topicBreakdown].sort((a, b) => b.percent - a.percent);
-    const strongestTopic = sortedByPercent.length > 0 && sortedByPercent[0].percent > 0
+    // Weakness ranking uses evidence, not raw MCQ accuracy. This prevents a
+    // lucky 2/2 from immediately being treated as mastery when confidence/time
+    // signals show that the answers were likely guesses.
+    const sortedByPercent = [...topicBreakdown].sort((a, b) => (b.evidencePercent ?? b.percent) - (a.evidencePercent ?? a.percent));
+    const strongestTopic = sortedByPercent.length > 0 && (sortedByPercent[0].evidencePercent ?? sortedByPercent[0].percent) >= 80 && !sortedByPercent[0].verificationNeeded
       ? sortedByPercent[0]
       : null;
-    const weakestTopic = sortedByPercent.length > 0 && sortedByPercent[sortedByPercent.length - 1].percent < 100
-      ? sortedByPercent[sortedByPercent.length - 1]
+    const lowestTopic = sortedByPercent[sortedByPercent.length - 1];
+    const weakestTopic = lowestTopic && ((lowestTopic.evidencePercent ?? lowestTopic.percent) < 80 || lowestTopic.verificationNeeded)
+      ? lowestTopic
       : null;
     const sampleMistake = weakestTopic
       ? results.find((r) => r.topic === weakestTopic.topic && !r.isCorrect) ?? null
       : null;
 
-    setLastDiagnosticResult({
+    const computedResult: DiagnosticResultData = {
       score,
       totalQuestions,
       scorePercent,
@@ -357,14 +372,27 @@ export default function App() {
       strongestTopic,
       weakestTopic,
       sampleMistake,
+    };
+
+    setLastDiagnosticResult(computedResult);
+
+    // Always persist the completed diagnostic locally first. This is what makes
+    // the assessment survive a network outage instead of being a cloud-only demo.
+    const localStudentId = student?.id ?? 'offline-demo-student';
+    await saveLocalResult({
+      kind: 'diagnostic',
+      studentId: localStudentId,
+      payload: { result: computedResult, answers: results },
+      synced: false,
     });
+    await updateLocalMastery(localStudentId, computedResult, results);
 
     // Real save to Supabase — only possible for a real logged-in student
     // (student.id is a real auth-linked uuid, never the offline demo id).
     if (isSupabaseConfigured() && student && student.id !== 'offline-demo-student') {
       const topicScores: Record<string, number> = {};
       topicBreakdown.forEach((t) => {
-        topicScores[t.topic] = t.percent;
+        topicScores[t.topic] = t.evidencePercent ?? t.percent;
       });
 
       const diagnosticInput = {
@@ -372,6 +400,23 @@ export default function App() {
         score,
         totalQuestions,
         topicScores,
+        diagnosticDetails: {
+          score,
+          totalQuestions,
+          scorePercent,
+          topics: topicBreakdown,
+          answers: results.map((r) => ({
+            questionId: r.questionId,
+            topic: r.topic,
+            selectedIndex: r.selectedIndex,
+            correctIndex: r.correctIndex,
+            isCorrect: r.isCorrect,
+            confidence: r.confidence,
+            responseTimeMs: r.responseTimeMs,
+            difficulty: r.difficulty,
+            evidenceScore: r.evidenceScore,
+          })),
+        },
       };
 
       saveDiagnosticResult(diagnosticInput).then(async () => {

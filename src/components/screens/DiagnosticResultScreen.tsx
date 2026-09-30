@@ -98,8 +98,8 @@ export const DiagnosticResultScreen: React.FC<DiagnosticResultScreenProps> = ({
               </h4>
               <p className="text-[11px] text-on-surface-variant">
                 {isHindi
-                  ? `${strongestTopic.correct}/${strongestTopic.total} सही • ${strongestTopic.percent}% निपुणता`
-                  : `${strongestTopic.correct}/${strongestTopic.total} Correct • ${strongestTopic.percent}% Mastery`}
+                  ? `${strongestTopic.correct}/${strongestTopic.total} सही • ${strongestTopic.evidencePercent ?? strongestTopic.percent}% प्रमाणित निपुणता`
+                  : `${strongestTopic.correct}/${strongestTopic.total} Correct • ${strongestTopic.evidencePercent ?? strongestTopic.percent}% evidence-based mastery`}
               </p>
             </div>
           ) : (
@@ -119,15 +119,15 @@ export const DiagnosticResultScreen: React.FC<DiagnosticResultScreenProps> = ({
                 >
                   warning
                 </span>
-                <span>{isHindi ? 'सुधार आवश्यक' : 'NEEDS PRACTICE'}</span>
+                <span>{weakestTopic.verificationNeeded ? (isHindi ? 'पुनः जांच आवश्यक' : 'VERIFY BEFORE MASTERY') : (isHindi ? 'सुधार आवश्यक' : 'NEEDS PRACTICE')}</span>
               </div>
               <h4 className="font-bold text-primary text-[14px] leading-tight">
                 {isHindi ? weakestTopic.topicHi : weakestTopic.topic}
               </h4>
               <p className="text-[11px] text-on-surface-variant">
                 {isHindi
-                  ? `${weakestTopic.correct}/${weakestTopic.total} सही • अभ्यास चाहिए`
-                  : `${weakestTopic.correct}/${weakestTopic.total} Correct • Concept gap identified`}
+                  ? `${weakestTopic.correct}/${weakestTopic.total} सही • ${weakestTopic.evidencePercent ?? weakestTopic.percent}% प्रमाण • ${weakestTopic.verificationNeeded ? 'पुनः जांच' : 'अभ्यास चाहिए'}`
+                  : `${weakestTopic.correct}/${weakestTopic.total} Correct • ${weakestTopic.evidencePercent ?? weakestTopic.percent}% evidence • ${weakestTopic.verificationNeeded ? 'Verification recommended' : 'Practice needed'}`}
               </p>
             </div>
           ) : (
@@ -195,6 +195,11 @@ export const DiagnosticResultScreen: React.FC<DiagnosticResultScreenProps> = ({
         <h3 className="text-[12.5px] font-bold text-primary">
           {isHindi ? 'सभी विषयों का विवरण' : 'Full Topic Breakdown'}
         </h3>
+        <p className="text-[10.5px] text-on-surface-variant">
+          {isHindi
+            ? 'निदान केवल सही उत्तर नहीं देखता; उत्तर पर भरोसा और समय को भी संकेत के रूप में उपयोग करता है।'
+            : 'Diagnosis uses correctness plus confidence and response time as supporting signals, so lucky guesses are less likely to be marked as mastery.'}
+        </p>
         {result.topicBreakdown.map((t) => (
           <div key={t.topic} className="flex items-center justify-between gap-2">
             <span className="text-[12px] font-semibold text-on-surface truncate">
@@ -204,12 +209,17 @@ export const DiagnosticResultScreen: React.FC<DiagnosticResultScreenProps> = ({
               <div className="w-20 h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
                 <div
                   className={`h-full rounded-full ${t.percent >= 60 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                  style={{ width: `${t.percent}%` }}
+                  style={{ width: `${t.evidencePercent ?? t.percent}%` }}
                 />
               </div>
-              <span className="text-[11px] font-bold text-on-surface-variant w-14 text-right">
-                {t.correct}/{t.total} · {t.percent}%
-              </span>
+              <div className="flex flex-col items-end">
+                <span className="text-[11px] font-bold text-on-surface-variant w-14 text-right">
+                  {t.correct}/{t.total} · {t.evidencePercent ?? t.percent}%
+                </span>
+                {t.verificationNeeded && (
+                  <span className="text-[9px] font-bold text-amber-700">{isHindi ? 'पुनः जांच' : 'Verify'}</span>
+                )}
+              </div>
             </div>
           </div>
         ))}

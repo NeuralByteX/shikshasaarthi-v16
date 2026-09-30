@@ -31,6 +31,7 @@ export const TeacherPortalScreen: React.FC<TeacherPortalScreenProps> = ({
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assignedIds, setAssignedIds] = useState<Set<string>>(new Set());
   const [isLive, setIsLive] = useState(false);
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const requestSeq = useRef(0);
 
@@ -323,6 +324,47 @@ export const TeacherPortalScreen: React.FC<TeacherPortalScreenProps> = ({
                             : ` • Weakest: ${entry.weakestTopic}${entry.weakestMastery !== null ? ` (${entry.weakestMastery}%)` : ''}`
                           : ''}
                       </span>
+                      {entry.diagnosticDetails && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedStudentId((current) => current === entry.studentId ? null : entry.studentId)}
+                          className="mt-1 px-2 py-1 rounded-lg bg-primary/10 text-primary font-bold text-[10.5px]"
+                        >
+                          {expandedStudentId === entry.studentId
+                            ? (isHindi ? 'विवरण छिपाएँ' : 'Hide diagnostic details')
+                            : (isHindi ? 'पूरा निदान देखें' : 'View full diagnostic')}
+                        </button>
+                      )}
+                      {entry.diagnosticDetails && expandedStudentId === entry.studentId && (
+                        <div className="mt-2 w-full rounded-xl bg-white border border-surface-container-highest p-2.5 space-y-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div className="rounded-lg bg-surface-container-low p-2"><div className="text-[9px] text-on-surface-variant">{isHindi ? 'कच्चा स्कोर' : 'Raw score'}</div><div className="font-bold text-[12px]">{entry.diagnosticDetails.score}/{entry.diagnosticDetails.totalQuestions}</div></div>
+                            <div className="rounded-lg bg-surface-container-low p-2"><div className="text-[9px] text-on-surface-variant">{isHindi ? 'प्रमाण स्कोर' : 'Evidence'}</div><div className="font-bold text-[12px]">{Math.round((entry.diagnosticDetails.topics ?? []).reduce((a: number, t: any) => a + (t.evidencePercent ?? t.percent ?? 0), 0) / Math.max(1, (entry.diagnosticDetails.topics ?? []).length))}%</div></div>
+                            <div className="rounded-lg bg-surface-container-low p-2"><div className="text-[9px] text-on-surface-variant">{isHindi ? 'विश्वास' : 'Confidence'}</div><div className="font-bold text-[12px]">{Math.round((entry.diagnosticDetails.topics ?? []).reduce((a: number, t: any) => a + (t.confidencePercent ?? 0), 0) / Math.max(1, (entry.diagnosticDetails.topics ?? []).length))}%</div></div>
+                            <div className="rounded-lg bg-surface-container-low p-2"><div className="text-[9px] text-on-surface-variant">{isHindi ? 'पुष्टि' : 'Verification'}</div><div className="font-bold text-[12px]">{(entry.diagnosticDetails.topics ?? []).filter((t: any) => t.verificationNeeded).length}</div></div>
+                          </div>
+                          <div>
+                            <div className="text-[10.5px] font-bold text-primary mb-1">{isHindi ? 'अवधारणा विवरण' : 'Concept breakdown'}</div>
+                            <div className="space-y-1.5">
+                              {(entry.diagnosticDetails.topics ?? []).map((t: any) => (
+                                <div key={t.topic} className="rounded-lg bg-surface-container-low p-2">
+                                  <div className="flex items-center justify-between gap-2 text-[10.5px]">
+                                    <span className="font-bold truncate">{t.topic}</span>
+                                    <span className="font-bold">{t.correct}/{t.total} • {t.evidencePercent ?? t.percent}%</span>
+                                  </div>
+                                  <div className="mt-1 flex gap-1 flex-wrap text-[9.5px] text-on-surface-variant">
+                                    <span>{isHindi ? 'विश्वास' : 'Confidence'}: {t.confidencePercent ?? 0}%</span>
+                                    <span>•</span>
+                                    <span>{isHindi ? 'संभावित अनुमान' : 'Likely guesses'}: {t.likelyGuessCount ?? 0}</span>
+                                    {t.verificationNeeded && <><span>•</span><span className="text-amber-700 font-bold">{isHindi ? 'पुष्टि आवश्यक' : 'Verification needed'}</span></>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {p && (
                         <span className="mt-0.5 flex items-center gap-1 flex-wrap text-[10.5px] font-bold">
                           <span

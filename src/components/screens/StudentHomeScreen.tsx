@@ -442,10 +442,10 @@ export const StudentHomeScreen: React.FC<StudentHomeScreenProps> = ({
                         {isHindi ? 'सहपाठी मुकाबला' : 'Classmate Duel'}
                       </span>
                       <h4 className="font-bold text-[13px] text-on-surface truncate">
-                        {isHindi ? 'दो लैपटॉप पर लाइव मुकाबला' : 'Live duel, two laptops'}
+                        {isHindi ? 'आरव बनाम पूजा (ऑफ़लाइन ब्लूटूथ)' : 'Aarav vs Pooja (Bluetooth)'}
                       </h4>
                       <p className="text-[11px] text-on-surface-variant">
-                        {isHindi ? 'इंटरनेट ज़रूरी है' : 'Requires internet'}
+                        {isHindi ? 'बिना इंटरनेट लाइव मैच' : 'Peer-to-peer live duel'}
                       </p>
                     </div>
                   </div>

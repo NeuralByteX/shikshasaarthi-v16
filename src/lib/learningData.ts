@@ -5,6 +5,7 @@ export type DiagnosticSaveInput = {
   score: number;
   totalQuestions: number;
   topicScores: Record<string, number>;
+  diagnosticDetails?: unknown;
 };
 
 export async function saveDiagnosticResult(input: DiagnosticSaveInput) {
@@ -21,6 +22,7 @@ export async function saveDiagnosticResult(input: DiagnosticSaveInput) {
       score: input.score,
       total_questions: input.totalQuestions,
       topic_scores: input.topicScores,
+      ...(input.diagnosticDetails !== undefined ? { diagnostic_details: input.diagnosticDetails } : {}),
     })
     .select()
     .single();
@@ -101,7 +103,10 @@ export interface ClassRosterEntry {
   name: string;
   rollNo: string | null;
   latestScorePercent: number | null;
+  latestScore: number | null;
+  latestTotalQuestions: number | null;
   latestCompletedAt: string | null;
+  diagnosticDetails: any | null;
   weakestTopic: string | null;
   /** Current mastery (0-100) of weakestTopic — reflects remedial practice. */
   weakestMastery: number | null;
@@ -171,7 +176,7 @@ export async function getClassRoster(teacherId: string, classId: string): Promis
     supabase.from('students').select('id, name, roll_no').in('id', studentIds),
     supabase
       .from('diagnostic_results')
-      .select('student_id, score, total_questions, topic_scores, completed_at')
+      .select('student_id, score, total_questions, topic_scores, diagnostic_details, completed_at')
       .in('student_id', studentIds)
       .order('completed_at', { ascending: false }),
     supabase
@@ -259,7 +264,10 @@ export async function getClassRoster(teacherId: string, classId: string): Promis
       name: s.name,
       rollNo: s.roll_no,
       latestScorePercent,
+      latestScore: diag?.score ?? null,
+      latestTotalQuestions: diag?.total_questions ?? null,
       latestCompletedAt: diag?.completed_at ?? null,
+      diagnosticDetails: diag?.diagnostic_details ?? null,
       weakestTopic,
       weakestMastery,
       latestPractice,

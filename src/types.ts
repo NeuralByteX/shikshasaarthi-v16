@@ -57,6 +57,8 @@ export interface DiagnosticQuestion {
   correctIndex: number;
   explanation: string;
   explanationHi: string;
+  /** 1=foundation, 2=practice, 3=challenge. Optional for backward compatibility. */
+  difficulty?: 1 | 2 | 3;
 }
 
 /** One resolved answer from a completed diagnostic session, after shuffling. */
@@ -64,9 +66,16 @@ export interface DiagnosticAnswerRecord {
   questionId: number;
   topic: string;
   topicHi: string;
-  selectedIndex: number;
+  selectedIndex: number | undefined;
   correctIndex: number;
   isCorrect: boolean;
+  /** Self-reported confidence helps distinguish knowledge from lucky guesses. */
+  confidence: 'low' | 'medium' | 'high';
+  /** Time spent on this item; used only as a weak anti-guessing signal. */
+  responseTimeMs: number;
+  difficulty: 1 | 2 | 3;
+  /** Confidence/time-adjusted evidence contribution, 0..1. */
+  evidenceScore: number;
   explanation: string;
   explanationHi: string;
 }
@@ -78,6 +87,14 @@ export interface TopicBreakdownEntry {
   correct: number;
   total: number;
   percent: number;
+  /** Accuracy adjusted for confidence, difficulty and suspiciously-fast answers. */
+  evidencePercent?: number;
+  /** Average self-reported confidence: 0..100. */
+  confidencePercent?: number;
+  /** Number of answers that look like likely guesses (very fast + low confidence). */
+  likelyGuessCount?: number;
+  /** True when this topic needs a verification attempt before being called mastered. */
+  verificationNeeded?: boolean;
 }
 
 /** Fully computed diagnostic outcome — the single source of truth for both
